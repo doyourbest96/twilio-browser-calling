@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import {
   createContext,
@@ -6,10 +7,9 @@ import {
   useState,
   useEffect,
 } from "react";
-import { Device as TwilioDevice, Connection } from "twilio-client";
 
 interface TwilioContextType {
-  device: TwilioDevice | null;
+  device: any;
   twilioNumber: string;
   twilioLogs: string[];
 
@@ -23,7 +23,7 @@ interface TwilioContextType {
 const TwilioContext = createContext<TwilioContextType | undefined>(undefined);
 
 export function TwilioProvider({ children }: { children: ReactNode }) {
-  const [device, setDevice] = useState<TwilioDevice | null>(null);
+  const [device, setDevice] = useState<any>(null);
   const [twilioNumber, setTwilioNumber] = useState<string>("");
   const [twilioLogs, setTwilioLogs] = useState<string[]>([]);
 
@@ -33,7 +33,8 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
 
   const handleCallOut = (number: string) => {
     if (!device) return;
-    device.connect({ number });
+    console.log("phone number: ", number);
+    device.connect({ To: number });
   };
   
   const handleHangUp = () => {
@@ -86,6 +87,8 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
           },
         });
 
+        const TwilioDevice = (await import("twilio-client")).Device;
+        const Connection = (await import("twilio-client")).Connection;
         const newDevice = new TwilioDevice(data.token, {
           codecPreferences: [Connection.Codec.PCMU, Connection.Codec.Opus],
           fakeLocalDTMF: true,
@@ -105,6 +108,15 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
 
         newDevice.on("connect", () => {
           addTwilioLog("Successfully established call!");
+        });
+
+        newDevice.on("ringing", () => {
+          addTwilioLog("Ringing...");
+        });
+
+        newDevice.on("incoming", (conn) => {
+          console.log(conn.parameters);
+          addTwilioLog("Incoming connection from " + conn.parameters.From);
         });
 
         newDevice.on("disconnect", () => {
