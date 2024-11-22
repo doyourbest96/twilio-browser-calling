@@ -10,6 +10,8 @@ import {
 
 interface TwilioContextType {
   device: any;
+  inComingConnection: any;
+  outGoingConnection: any;
   twilioNumber: string;
   twilioLogs: string[];
 
@@ -18,12 +20,16 @@ interface TwilioContextType {
   setTwilioLogs: (logs: string[]) => void;
   handleCallOut: (number: string) => void;
   handleHangUp: () => void;
+  handleAcceptCall: () => void;
+  handleRejectCall: () => void;
 }
 
 const TwilioContext = createContext<TwilioContextType | undefined>(undefined);
 
 export function TwilioProvider({ children }: { children: ReactNode }) {
   const [device, setDevice] = useState<any>(null);
+  const [inComingConnection, setInComingConnection] = useState<any>(null);
+  const [outGoingConnection, setOutGoingConnection] = useState<any>(null);
   const [twilioNumber, setTwilioNumber] = useState<string>("");
   const [twilioLogs, setTwilioLogs] = useState<string[]>([]);
 
@@ -33,13 +39,34 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
 
   const handleCallOut = (number: string) => {
     if (!device) return;
-    console.log("phone number: ", number);
-    device.connect({ To: number });
+    addTwilioLog(`Calling ${number}...`);
+
+    const newConn = device.connect({ To: number });
+
+    newConn.on("ringing", () => {
+      addTwilioLog("Ringing...");
+    });
+
+    setOutGoingConnection(newConn);
   };
-  
+
   const handleHangUp = () => {
     if (!device) return;
+    addTwilioLog("Hanging up...");
     device.disconnectAll();
+  };
+
+  const handleAcceptCall = () => {
+    if (!inComingConnection) return;
+    inComingConnection.accept();
+    addTwilioLog("Accepted call ...");
+  };
+
+  const handleRejectCall = () => {
+    if (!inComingConnection) return;
+    inComingConnection.reject();
+    setInComingConnection(null);
+    addTwilioLog("Rejected call ...");
   };
 
   useEffect(() => {
@@ -63,7 +90,7 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
 
         addTwilioLog("Requesting Access Token...");
         const response = await fetch(
-          `http://localhost:5000/token?identity=${twilioNumber}`,
+          `https://3962-45-126-3-252.ngrok-free.app/token?identity=${twilioNumber}`,
           {
             method: "GET",
             headers: {
@@ -110,12 +137,9 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
           addTwilioLog("Successfully established call!");
         });
 
-        newDevice.on("ringing", () => {
-          addTwilioLog("Ringing...");
-        });
-
         newDevice.on("incoming", (conn) => {
-          console.log(conn.parameters);
+          console.log(conn);
+          setInComingConnection(conn);
           addTwilioLog("Incoming connection from " + conn.parameters.From);
         });
 
@@ -148,6 +172,8 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
     <TwilioContext.Provider
       value={{
         device,
+        inComingConnection,
+        outGoingConnection,
         twilioNumber,
         twilioLogs,
         setTwilioNumber,
@@ -155,6 +181,8 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
         setTwilioLogs,
         handleCallOut,
         handleHangUp,
+        handleAcceptCall,
+        handleRejectCall,
       }}
     >
       {children}

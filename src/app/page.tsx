@@ -11,10 +11,17 @@ import { useTwilioContext } from "@/contexts/TwilioContext";
 export default function Home() {
   const [showDialPad, setShowDialPad] = useState(false);
   const [isCallActive, setIsCallActive] = useState(false);
-  const [incomingCall, setIncomingCall] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
 
-  const { twilioLogs, setTwilioNumber, handleCallOut } = useTwilioContext();
+  const {
+    inComingConnection,
+    twilioLogs,
+    setTwilioNumber,
+    handleCallOut,
+    handleHangUp,
+    handleAcceptCall,
+    handleRejectCall,
+  } = useTwilioContext();
 
   const handleCall = (phoneNumber: string) => {
     setShowDialPad(false);
@@ -61,19 +68,22 @@ export default function Home() {
         {isCallActive && (
           <div className="call-modal">
             <CallOutModal />
-            <button onClick={() => setIsCallActive(false)}>End Call</button>
+            <button
+              onClick={() => {
+                setIsCallActive(false);
+                handleHangUp();
+              }}
+            >
+              End Call
+            </button>
           </div>
         )}
-        {incomingCall && (
-          <CallInModal
-            callerNumber="123-456-7890"
-            onAccept={() => {
-              setIncomingCall(false);
-              setIsCallActive(true);
-            }}
-            onReject={() => setIncomingCall(false)}
-          />
-        )}
+        
+        <CallInModal
+          connection={inComingConnection}
+          onAccept={handleAcceptCall}
+          onReject={handleRejectCall}
+        />
       </div>
     </div>
   );

@@ -1,22 +1,24 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC } from "react";
 
 interface CallInModalProps {
-  callerNumber: string;
+  connection: any;
   onAccept: () => void;
   onReject: () => void;
 }
 
 const CallInModal: FC<CallInModalProps> = ({
-  callerNumber,
+  connection,
   onAccept,
   onReject,
 }) => {
   return (
+    connection ? (
     <div className="fixed inset-0 flex items-center justify-center">
       <div className="w-[300px] bg-white rounded-lg shadow-xl">
         {/* Header */}
         <div className="p-4 text-center border-b">
-          <h4 className="text-lg font-medium">{callerNumber}</h4>
+          <h4 className="text-lg font-medium">{connection.parameters.From}</h4>
         </div>
 
         {/* Body */}
@@ -63,7 +65,7 @@ const CallInModal: FC<CallInModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>): (<></>)
   );
 };
 
