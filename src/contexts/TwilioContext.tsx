@@ -33,8 +33,8 @@ interface TwilioContextType {
 const TwilioContext = createContext<TwilioContextType | undefined>(undefined);
 
 export function TwilioProvider({ children }: { children: ReactNode }) {
-  const [device, setDevice] = useState<any>(null); // Replace with a specific type if available
-  const [callStatus, setCallStatus] = useState("init"); // init, ringing, connected, disconnected
+  const [device, setDevice] = useState<any>(null);
+  const [callStatus, setCallStatus] = useState("init");
   const [incomingConnection, setIncomingConnection] = useState<any>(null);
   const [outgoingConnection, setOutgoingConnection] = useState<any>(null);
   const [twilioNumber, setTwilioNumber] = useState<string>("");
@@ -46,12 +46,10 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
   const callDurationInterval = useRef<NodeJS.Timeout | null>(null);
   const recorder = useRef<any>(null);
 
-  // Function to add logs to the Twilio logs
   const addTwilioLog = (log: string) => {
     setTwilioLogs((prevLogs) => [...prevLogs, log]);
   };
 
-  // Handles making an outgoing call
   const handleCallOut = (number: string) => {
     if (!device || callStatus !== "ready") return;
 
@@ -81,7 +79,6 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
     setCallStatus("outgoing");
   };
 
-  // Handles hanging up the call
   const handleHangUp = () => {
     if (outgoingConnection) {
       outgoingConnection.disconnect();
@@ -92,7 +89,6 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
     stopRecording();
   };
 
-  // Accepts an incoming call
   const handleAcceptCall = () => {
     if (incomingConnection) {
       incomingConnection.accept();
@@ -102,19 +98,17 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Rejects an incoming call
   const handleRejectCall = () => {
     if (outgoingConnection) {
       outgoingConnection.disconnect();
     } else {
       incomingConnection?.disconnect();
     }
-    addTwilioLog("Rejected call ...");
+    addTwilioLog("Rejected call...");
     setCallStatus("ready");
     stopRecording();
   };
 
-  // Starts recording the call
   const startRecording = async () => {
     const connection = outgoingConnection || incomingConnection;
 
@@ -130,7 +124,7 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
         setCaptionText(transcription);
       });
 
-      recorder.current = recording; // Store the recorder instance
+      recorder.current = recording;
       setIsRecording(true);
       addTwilioLog("Recording started...");
     } catch (error) {
@@ -143,23 +137,20 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Stops recording the call
   const stopRecording = () => {
     if (recorder.current) {
       recorder.current.stop();
       setIsRecording(false);
       addTwilioLog("Recording stopped.");
 
-      // Access the recording URL and other properties
       const recordingUrl = recorder.current.url;
       const recordingDuration = recorder.current.duration;
       addTwilioLog(`Recording URL: ${recordingUrl}`);
       addTwilioLog(`Recording Duration: ${recordingDuration}`);
-      console.log("Caption Text:", captionText); // Example: Store in your database
+      console.log("Caption Text:", captionText);
     }
   };
 
-  // Effect to track call duration
   useEffect(() => {
     if (callStatus === "connected") {
       if (callStartTime.current === null) {
@@ -185,7 +176,6 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
     };
   }, [callStatus]);
 
-  // Effect to initialize the Twilio device
   useEffect(() => {
     if (typeof window === "undefined" || twilioNumber === "") return;
 
@@ -223,7 +213,6 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
         addTwilioLog("Got a token.");
         console.log("Token: " + data.token);
 
-        // Request microphone access
         await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
@@ -287,10 +276,9 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
         device.destroy();
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [twilioNumber]);
 
-  // Return the context provider
   return (
     <TwilioContext.Provider
       value={{
@@ -317,7 +305,6 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Custom hook to use Twilio context
 export function useTwilioContext() {
   const context = useContext(TwilioContext);
   if (context === undefined) {
