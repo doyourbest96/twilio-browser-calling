@@ -211,7 +211,6 @@ export function TwilioProvider({ children }: { children: ReactNode }) {
 
         const data = await response.json();
         addTwilioLog("Got a token.");
-        console.log("Token: " + data.token);
 
         await navigator.mediaDevices.getUserMedia({
           audio: {
